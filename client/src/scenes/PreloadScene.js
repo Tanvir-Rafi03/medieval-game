@@ -2,13 +2,13 @@
 // Loads all game assets before WorldScene starts.
 // Shows a loading bar so the player knows assets are being fetched.
 //
-// Spritesheet layout (player-sheet.jpg, 2816×1536):
-//   6 columns × 4 rows, 4px margin around sheet, 0px spacing between frames
-//   → frameWidth = 468, frameHeight = 382
-//   Row 0: walk-down  (frames 0–5)
-//   Row 1: walk-left  (frames 6–11)
-//   Row 2: walk-right (frames 12–17)
-//   Row 3: walk-up    (frames 18–23)
+// Spritesheet layout (player-sheet.png, 768×616):
+//   4 columns × 4 rows, no margin, no spacing
+//   → frameWidth = 192, frameHeight = 154
+//   Row 0: walk-down  (frames 0–3)
+//   Row 1: walk-left  (frames 4–7)
+//   Row 2: walk-right (frames 8–11)
+//   Row 3: walk-up    (frames 12–15)
 
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -33,12 +33,10 @@ export default class PreloadScene extends Phaser.Scene {
 
     this.load.image('world', 'assets/world.jpg');
 
-    // 2816×1536 sheet, 6 cols × 4 rows, 4px outer margin, no inter-frame spacing
-    this.load.spritesheet('player', 'assets/sprites/player-sheet.jpg', {
-      frameWidth:  468,
-      frameHeight: 382,
-      margin:      4,
-      spacing:     0,
+    // 768×616 sheet, 4 cols × 4 rows, no margin, no spacing
+    this.load.spritesheet('player', 'assets/sprites/player-sheet.png', {
+      frameWidth:  192,
+      frameHeight: 154,
     });
   }
 
@@ -48,15 +46,15 @@ export default class PreloadScene extends Phaser.Scene {
 
     const rows = [
       { key: 'walk-down',  start: 0  },
-      { key: 'walk-left',  start: 6  },
-      { key: 'walk-right', start: 12 },
-      { key: 'walk-up',    start: 18 },
+      { key: 'walk-left',  start: 4  },
+      { key: 'walk-right', start: 8  },
+      { key: 'walk-up',    start: 12 },
     ];
 
     rows.forEach(({ key, start }) => {
       anims.create({
         key,
-        frames: anims.generateFrameNumbers('player', { start, end: start + 5 }),
+        frames: anims.generateFrameNumbers('player', { start, end: start + 3 }),
         frameRate: 8,
         repeat: -1,
       });

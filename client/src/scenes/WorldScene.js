@@ -8,21 +8,19 @@ import { playerState } from '../playerState.js';
 const SPEED = 180;
 const PLAYER_NAME = 'Adventurer'; // Phase 5: replace with real username
 
-// Spritesheet layout (2816×1536, 6 cols × 4 rows, 468×382 per frame, 4px margin):
-//   Row 0 → walk-down  (frames 0–5)
-//   Row 1 → walk-left  (frames 6–11)
-//   Row 2 → walk-right (frames 12–17)
-//   Row 3 → walk-up    (frames 18–23)
-const IDLE_FRAMES = { down: 0, left: 6, right: 12, up: 18 };
+// Spritesheet layout (768×616, 4 cols × 4 rows, 192×154 per frame, no margin):
+//   Row 0 → walk-down  (frames 0–3)
+//   Row 1 → walk-left  (frames 4–7)
+//   Row 2 → walk-right (frames 8–11)
+//   Row 3 → walk-up    (frames 12–15)
+const IDLE_FRAMES = { down: 0, left: 4, right: 8, up: 12 };
 
-// Hitbox tuning — all values in original (unscaled) frame pixels.
-// Turn on physics debug in main.js (arcade.debug: true) to see the box visually.
-//   BODY_W / BODY_H  : size of the collision box
-//   BODY_OFFSET_X/Y  : top-left corner of box relative to frame origin
-const BODY_W        = 180;  // ~38% of frame width  (468 * 0.38)
-const BODY_H        = 160;  // ~42% of frame height (382 * 0.42)
-const BODY_OFFSET_X = 144;  // (468 - 180) / 2  → centers horizontally
-const BODY_OFFSET_Y = 200;  // character feet sit at ~y=360, box top at 200
+// Hitbox — values in unscaled frame pixels (192×154 frame).
+// Character occupies roughly the middle 42% horizontally, bottom 60% vertically.
+const BODY_W        = 80;   // ~42% of 192
+const BODY_H        = 80;   // ~52% of 154
+const BODY_OFFSET_X = 56;   // (192 - 80) / 2 → horizontally centered
+const BODY_OFFSET_Y = 60;   // upper 40% is head/hair, body starts ~y=60
 
 export default class WorldScene extends Phaser.Scene {
   constructor() {
@@ -48,7 +46,7 @@ export default class WorldScene extends Phaser.Scene {
 
     // ── Player sprite ───────────────────────────────────────────────────────
     this._sprite = this.physics.add.sprite(width / 2, height * 0.52, 'player', 0);
-    this._sprite.setScale(0.16);          // 468px frame → ~75px on screen
+    this._sprite.setScale(0.6);           // 192px frame → ~115px on screen
     this._sprite.body.setSize(BODY_W, BODY_H);
     this._sprite.body.setOffset(BODY_OFFSET_X, BODY_OFFSET_Y);
     this._sprite.body.setCollideWorldBounds(true);

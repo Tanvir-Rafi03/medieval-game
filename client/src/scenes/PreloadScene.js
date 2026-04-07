@@ -2,7 +2,7 @@
 // Loads all game assets before WorldScene starts.
 // Shows a loading bar so the player knows assets are being fetched.
 //
-// Spritesheet layout (player-sheet.png, 768×616):
+// Spritesheet layout (player-sheet.png, 768×616, RGBA):
 //   4 columns × 4 rows, no margin, no spacing
 //   → frameWidth = 192, frameHeight = 154
 //   Row 0: walk-down  (frames 0–3)
@@ -33,7 +33,7 @@ export default class PreloadScene extends Phaser.Scene {
 
     this.load.image('world', 'assets/world.jpg');
 
-    // 768×616 sheet, 4 cols × 4 rows, no margin, no spacing
+    // 768×616 PNG with transparency, 4 cols × 4 rows
     this.load.spritesheet('player', 'assets/sprites/player-sheet.png', {
       frameWidth:  192,
       frameHeight: 154,
@@ -41,13 +41,12 @@ export default class PreloadScene extends Phaser.Scene {
   }
 
   create() {
-    // Define animations once here so they're available globally to all scenes
     const anims = this.anims;
 
     const rows = [
-      { key: 'walk-down',  start: 0  },
-      { key: 'walk-left',  start: 4  },
-      { key: 'walk-right', start: 8  },
+      { key: 'walk-down',  start: 0 },
+      { key: 'walk-left',  start: 4 },
+      { key: 'walk-right', start: 8 },
       { key: 'walk-up',    start: 12 },
     ];
 

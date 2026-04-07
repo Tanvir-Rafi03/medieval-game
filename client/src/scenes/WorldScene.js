@@ -1,8 +1,15 @@
 // client/src/scenes/WorldScene.js
 // Main game scene. World background, animated player sprite, WASD movement,
 // interactive building zones, name tag, camera polish.
+//
+// Depth / occlusion system:
+//   depth 0     → world background image
+//   depth 1–500 → player (sprite.y, so walking down = higher depth = in front)
+//   depth 501   → name tag (always just above player)
+//   depth 9999  → foreground mask (front faces of buildings/fountain — always on top)
 
 import { ZONES } from '../zones.js';
+import { WALLS, FOREGROUND_REGIONS } from '../collisions.js';
 import { playerState } from '../playerState.js';
 
 const SPEED = 180;
@@ -15,12 +22,11 @@ const PLAYER_NAME = 'Adventurer'; // Phase 5: replace with real username
 //   Row 3 → walk-up    (frames 12–15)
 const IDLE_FRAMES = { down: 0, left: 4, right: 8, up: 12 };
 
-// Hitbox — values in unscaled frame pixels (192×154 frame).
-// Character occupies roughly the middle 42% horizontally, bottom 60% vertically.
-const BODY_W        = 80;   // ~42% of 192
-const BODY_H        = 80;   // ~52% of 154
-const BODY_OFFSET_X = 56;   // (192 - 80) / 2 → horizontally centered
-const BODY_OFFSET_Y = 60;   // upper 40% is head/hair, body starts ~y=60
+// Hitbox in unscaled frame pixels (192×154 frame)
+const BODY_W        = 80;
+const BODY_H        = 80;
+const BODY_OFFSET_X = 56;  // (192 - 80) / 2 → centered
+const BODY_OFFSET_Y = 60;  // below head
 
 export default class WorldScene extends Phaser.Scene {
   constructor() {
@@ -42,15 +48,25 @@ export default class WorldScene extends Phaser.Scene {
     const bgX = (width  - bgW) / 2;
     const bgY = (height - bgH) / 2;
     bg.setScale(bgScale).setPosition(bgX, bgY).setDepth(0);
-    this._bgLayout = { x: bgX, y: bgY, w: bgW, h: bgH };
+    this._bgLayout = { x: bgX, y: bgY, w: bgW, h: bgH, scale: bgScale };
+
+    // ── Collision walls ─────────────────────────────────────────────────────
+    this._createWalls();
 
     // ── Player sprite ───────────────────────────────────────────────────────
     this._sprite = this.physics.add.sprite(width / 2, height * 0.52, 'player', 0);
-    this._sprite.setScale(0.6);           // 192px frame → ~115px on screen
+    this._sprite.setScale(0.35);
     this._sprite.body.setSize(BODY_W, BODY_H);
     this._sprite.body.setOffset(BODY_OFFSET_X, BODY_OFFSET_Y);
     this._sprite.body.setCollideWorldBounds(true);
-    this._sprite.setDepth(10);
+    // Depth = y so the player sorts correctly as they move up/down the world
+    this._sprite.setDepth(this._sprite.y);
+
+    // ── Collide player with walls ────────────────────────────────────────────
+    this.physics.add.collider(this._sprite, this._walls);
+
+    // ── Foreground mask (front faces of buildings — renders above player) ───
+    this._createForeground();
 
     // ── Name tag ────────────────────────────────────────────────────────────
     this._nameTag = this.add.text(0, 0, PLAYER_NAME, {
@@ -59,7 +75,7 @@ export default class WorldScene extends Phaser.Scene {
       color:      '#c9a84c',
       stroke:     '#1a1a2e',
       strokeThickness: 3,
-    }).setOrigin(0.5, 1).setDepth(11);
+    }).setOrigin(0.5, 1);
 
     // ── Input ────────────────────────────────────────────────────────────────
     this._cursors = this.input.keyboard.createCursorKeys();
@@ -71,7 +87,6 @@ export default class WorldScene extends Phaser.Scene {
     });
 
     // ── Camera ───────────────────────────────────────────────────────────────
-    // Bound to world image so camera never shows empty space beyond edges
     this.cameras.main.setBounds(bgX, bgY, bgW, bgH);
     this.cameras.main.startFollow(this._sprite, true, 0.1, 0.1);
 
@@ -82,22 +97,22 @@ export default class WorldScene extends Phaser.Scene {
     this._tooltipEl = document.createElement('div');
     this._tooltipEl.id = 'zone-tooltip';
     Object.assign(this._tooltipEl.style, {
-      position:    'fixed',
-      padding:     '8px 14px',
-      background:  'rgba(26,26,46,0.92)',
-      border:      '1px solid #c9a84c',
-      color:       '#c9a84c',
-      fontFamily:  '"Cinzel", serif',
-      fontSize:    '14px',
-      borderRadius:'4px',
+      position:     'fixed',
+      padding:      '8px 14px',
+      background:   'rgba(26,26,46,0.92)',
+      border:       '1px solid #c9a84c',
+      color:        '#c9a84c',
+      fontFamily:   '"Cinzel", serif',
+      fontSize:     '14px',
+      borderRadius: '4px',
       pointerEvents:'none',
-      display:     'none',
-      zIndex:      '20',
-      whiteSpace:  'nowrap',
+      display:      'none',
+      zIndex:       '20',
+      whiteSpace:   'nowrap',
     });
     document.getElementById('ui-layer').appendChild(this._tooltipEl);
 
-    // ── Vignette overlay ─────────────────────────────────────────────────────
+    // ── Vignette ─────────────────────────────────────────────────────────────
     this._createVignette();
 
     // ── React to playerState changes ─────────────────────────────────────────
@@ -107,8 +122,57 @@ export default class WorldScene extends Phaser.Scene {
       if (state === 'on-break') this._exitWorking();
     });
 
-    // Apply initial state in case something set it before scene loaded
     if (playerState.get() === 'working') this._enterWorking();
+  }
+
+  // ── Collision walls ────────────────────────────────────────────────────────
+  _createWalls() {
+    const { x: bx, y: by, w: bw, h: bh } = this._bgLayout;
+
+    this._walls = this.physics.add.staticGroup();
+
+    WALLS.forEach((wall) => {
+      const wx = bx + wall.x * bw;
+      const wy = by + wall.y * bh;
+      const ww = wall.w * bw;
+      const wh = wall.h * bh;
+
+      // Invisible static rectangle — Phaser needs a real game object for arcade physics
+      const body = this.add.rectangle(wx + ww / 2, wy + wh / 2, ww, wh, 0x000000, 0);
+      this.physics.add.existing(body, true); // true = static
+      this._walls.add(body);
+
+      // Uncomment to debug wall positions:
+      // this.add.rectangle(wx + ww/2, wy + wh/2, ww, wh).setStrokeStyle(1, 0xff0000, 0.5).setDepth(9998);
+    });
+  }
+
+  // ── Foreground mask ────────────────────────────────────────────────────────
+  // Renders the world image a second time, masked to only show the "front faces"
+  // of buildings and the fountain. Sits at depth 9999 so it always appears above
+  // the player — creating the illusion that the player walks behind structures.
+  _createForeground() {
+    const { x: bx, y: by, w: bw, h: bh, scale: bgScale } = this._bgLayout;
+
+    // Second copy of the world image at max depth
+    const fg = this.add.image(bx, by, 'world')
+      .setOrigin(0, 0)
+      .setScale(bgScale)
+      .setDepth(9999);
+
+    // Build mask — only the foreground regions are visible through it
+    const mask = this.make.graphics({ add: false });
+    mask.fillStyle(0xffffff);
+
+    FOREGROUND_REGIONS.forEach((r) => {
+      const rx = bx + r.x * bw;
+      const ry = by + r.y * bh;
+      mask.fillRect(rx, ry, r.w * bw, r.h * bh);
+    });
+
+    fg.setMask(mask.createGeometryMask());
+    this._fgImage = fg;
+    this._fgMask  = mask;
   }
 
   // ── Vignette ──────────────────────────────────────────────────────────────
@@ -129,7 +193,7 @@ export default class WorldScene extends Phaser.Scene {
   // ── Working state ─────────────────────────────────────────────────────────
   _enterWorking() {
     this._sprite.anims.stop();
-    this._sprite.setFrame(IDLE_FRAMES.down + 1); // mid-walk frame as "sit"
+    this._sprite.setFrame(IDLE_FRAMES.down + 1);
     this._sprite.body.setVelocity(0);
 
     this._bobbingTween = this.tweens.add({
@@ -150,7 +214,7 @@ export default class WorldScene extends Phaser.Scene {
     this._sprite.setFrame(IDLE_FRAMES[this._lastDir]);
   }
 
-  // ── Zones ─────────────────────────────────────────────────────────────────
+  // ── Interactive zones ──────────────────────────────────────────────────────
   _createZones() {
     const { x: bx, y: by, w: bw, h: bh } = this._bgLayout;
 
@@ -199,15 +263,17 @@ export default class WorldScene extends Phaser.Scene {
     window.dispatchEvent(new CustomEvent('zone:open', { detail: zone }));
   }
 
-  // ── Update loop ───────────────────────────────────────────────────────────
+  // ── Update loop ────────────────────────────────────────────────────────────
   update() {
-    // Name tag follows sprite, 18px above head
+    // Y-based depth sorting — higher y = further down screen = drawn in front
+    this._sprite.setDepth(this._sprite.y);
+    // Name tag always just above the player in depth
+    this._nameTag.setDepth(this._sprite.y + 1);
     this._nameTag.setPosition(
       this._sprite.x,
-      this._sprite.y - this._sprite.displayHeight / 2 - 18,
+      this._sprite.y - this._sprite.displayHeight / 2 - 6,
     );
 
-    // Lock movement when working
     if (playerState.get() === 'working') {
       this._sprite.body.setVelocity(0);
       return;
@@ -229,17 +295,14 @@ export default class WorldScene extends Phaser.Scene {
 
     this._sprite.body.setVelocity(vx, vy);
 
-    // ── Animations ────────────────────────────────────────────────────────
     const moving = vx !== 0 || vy !== 0;
 
     if (moving) {
-      // Determine dominant direction for animation
       if      (left  && !right) { this._sprite.anims.play('walk-left',  true); this._lastDir = 'left'; }
       else if (right && !left)  { this._sprite.anims.play('walk-right', true); this._lastDir = 'right'; }
       else if (up    && !down)  { this._sprite.anims.play('walk-up',    true); this._lastDir = 'up'; }
       else if (down  && !up)    { this._sprite.anims.play('walk-down',  true); this._lastDir = 'down'; }
     } else {
-      // Idle: stop on first frame of last-used direction
       this._sprite.anims.stop();
       this._sprite.setFrame(IDLE_FRAMES[this._lastDir]);
     }

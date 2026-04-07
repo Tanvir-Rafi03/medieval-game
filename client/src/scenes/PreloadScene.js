@@ -3,7 +3,8 @@
 // Shows a loading bar so the player knows assets are being fetched.
 //
 // Spritesheet layout (player-sheet.jpg, 2816×1536):
-//   6 columns × 4 rows → frameWidth = 469, frameHeight = 384
+//   6 columns × 4 rows, 4px margin around sheet, 0px spacing between frames
+//   → frameWidth = 468, frameHeight = 382
 //   Row 0: walk-down  (frames 0–5)
 //   Row 1: walk-left  (frames 6–11)
 //   Row 2: walk-right (frames 12–17)
@@ -32,10 +33,12 @@ export default class PreloadScene extends Phaser.Scene {
 
     this.load.image('world', 'assets/world.jpg');
 
-    // 2816×1536 sheet, 6 cols × 4 rows
+    // 2816×1536 sheet, 6 cols × 4 rows, 4px outer margin, no inter-frame spacing
     this.load.spritesheet('player', 'assets/sprites/player-sheet.jpg', {
-      frameWidth: 469,
-      frameHeight: 384,
+      frameWidth:  468,
+      frameHeight: 382,
+      margin:      4,
+      spacing:     0,
     });
   }
 

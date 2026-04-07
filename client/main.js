@@ -23,7 +23,7 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 0 },
-      debug: false,
+      debug: true, // set false once hitbox looks right
     },
   },
   scene: [

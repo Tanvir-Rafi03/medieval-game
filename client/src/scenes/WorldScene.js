@@ -9,7 +9,7 @@
 //   depth 9999  → foreground mask (front faces of buildings/fountain — always on top)
 
 import { ZONES } from '../zones.js';
-import { WALLS, FOREGROUND_REGIONS } from '../collisions.js';
+import { WALLS, FOREGROUND_REGIONS, DEBUG_WALLS } from '../collisions.js';
 import { playerState } from '../playerState.js';
 import { initWorldFX } from '../fx/WorldFX.js';
 
@@ -73,14 +73,17 @@ export default class WorldScene extends Phaser.Scene {
     // ── Foreground mask (front faces of buildings — renders above player) ───
     this._createForeground();
 
-    // ── Name tag ────────────────────────────────────────────────────────────
+    // ── Name tag — parchment scroll banner ──────────────────────────────────
+    // Scroll background (rounded rectangle in parchment color)
+    this._nameTagBg = this.add.graphics();
+    // Label text
     this._nameTag = this.add.text(0, 0, PLAYER_NAME, {
       fontFamily: '"Cinzel", serif',
-      fontSize:   '10px',
-      color:      '#c9a84c',
-      stroke:     '#1a1a2e',
-      strokeThickness: 3,
-    }).setOrigin(0.5, 1);
+      fontSize:   '9px',
+      color:      '#2a1a00',
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+    this._drawNameTag();
 
     // ── Input ────────────────────────────────────────────────────────────────
     this._cursors = this.input.keyboard.createCursorKeys();
@@ -94,6 +97,18 @@ export default class WorldScene extends Phaser.Scene {
     // ── Camera ───────────────────────────────────────────────────────────────
     this.cameras.main.setBounds(bgX, bgY, bgW, bgH);
     this.cameras.main.startFollow(this._sprite, true, 0.1, 0.1);
+
+    // ── Parallax — subtle mouse offset applied on top of camera follow ───────
+    // Max offset in pixels — keeps it subtle so it doesn't feel disorienting
+    this._parallaxMax = 18;
+    this._parallaxTarget = { x: 0, y: 0 };
+    this._parallaxCurrent = { x: 0, y: 0 };
+    this.input.on('pointermove', (ptr) => {
+      const cx = this.scale.width  / 2;
+      const cy = this.scale.height / 2;
+      this._parallaxTarget.x = ((ptr.x - cx) / cx) * -this._parallaxMax;
+      this._parallaxTarget.y = ((ptr.y - cy) / cy) * -this._parallaxMax;
+    });
 
     // ── Interactive zones ────────────────────────────────────────────────────
     this._createZones();
@@ -147,8 +162,9 @@ export default class WorldScene extends Phaser.Scene {
       this.physics.add.existing(body, true); // true = static
       this._walls.add(body);
 
-      // Uncomment to debug wall positions:
-      // this.add.rectangle(wx + ww/2, wy + wh/2, ww, wh).setStrokeStyle(1, 0xff0000, 0.5).setDepth(9998);
+      if (DEBUG_WALLS) {
+        this.add.rectangle(wx + ww/2, wy + wh/2, ww, wh).setStrokeStyle(2, 0xff0000, 0.7).setDepth(9998);
+      }
     });
   }
 
@@ -178,6 +194,26 @@ export default class WorldScene extends Phaser.Scene {
     fg.setMask(mask.createGeometryMask());
     this._fgImage = fg;
     this._fgMask  = mask;
+  }
+
+  // ── Name tag scroll banner ────────────────────────────────────────────────
+  _drawNameTag() {
+    const pad = { x: 8, y: 3 };
+    const tw  = this._nameTag.width  + pad.x * 2;
+    const th  = this._nameTag.height + pad.y * 2;
+    const g   = this._nameTagBg;
+    g.clear();
+    // Parchment fill
+    g.fillStyle(0xf0d89a, 0.92);
+    g.fillRoundedRect(-tw / 2, -th / 2, tw, th, 3);
+    // Gold border
+    g.lineStyle(1, 0xc9a84c, 1);
+    g.strokeRoundedRect(-tw / 2, -th / 2, tw, th, 3);
+    // Small decorative notches on left & right edges (scroll end caps)
+    g.fillStyle(0xc9a84c, 0.8);
+    g.fillRect(-tw / 2 - 2, -2, 3, 4);
+    g.fillRect( tw / 2 - 1, -2, 3, 4);
+    this._nameTagH = th;
   }
 
   // ── Vignette ──────────────────────────────────────────────────────────────
@@ -270,14 +306,17 @@ export default class WorldScene extends Phaser.Scene {
 
   // ── Update loop ────────────────────────────────────────────────────────────
   update() {
+    // Parallax — smoothly lerp camera offset toward mouse position
+    this._parallaxCurrent.x = Phaser.Math.Linear(this._parallaxCurrent.x, this._parallaxTarget.x, 0.05);
+    this._parallaxCurrent.y = Phaser.Math.Linear(this._parallaxCurrent.y, this._parallaxTarget.y, 0.05);
+    this.cameras.main.setFollowOffset(this._parallaxCurrent.x, this._parallaxCurrent.y);
+
     // Y-based depth sorting — higher y = further down screen = drawn in front
     this._sprite.setDepth(this._sprite.y);
-    // Name tag always just above the player in depth
-    this._nameTag.setDepth(this._sprite.y + 1);
-    this._nameTag.setPosition(
-      this._sprite.x,
-      this._sprite.y - this._sprite.displayHeight / 2 - 6,
-    );
+    // Name tag scroll follows sprite, always just above head
+    const tagY = this._sprite.y - this._sprite.displayHeight / 2 - 10;
+    this._nameTagBg.setPosition(this._sprite.x, tagY).setDepth(this._sprite.y + 1);
+    this._nameTag.setPosition(this._sprite.x, tagY).setDepth(this._sprite.y + 2);
 
     if (playerState.get() === 'working') {
       this._sprite.body.setVelocity(0);

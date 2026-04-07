@@ -52,19 +52,35 @@ export default class WorldScene extends Phaser.Scene {
     bg.setScale(bgScale).setPosition(bgX, bgY).setDepth(0);
     this._bgLayout = { x: bgX, y: bgY, w: bgW, h: bgH, scale: bgScale };
 
-    // ── Fountain water — ripple shader sprite ────────────────────────────────
-    // fountain-water.png is cropped from world.jpg at exactly (0.38,0.54)→(0.62,0.63)
-    // — just the flat golden water basin, not the statue above it.
-    const fwX = bgX + 0.38 * bgW;
-    const fwY = bgY + 0.54 * bgH;
-    const fwW = (0.62 - 0.38) * bgW;
-    const fwH = (0.63 - 0.54) * bgH;
-    const fw  = this.add.image(fwX, fwY, 'fountain-water')
-      .setOrigin(0, 0)
-      .setDisplaySize(fwW, fwH)
+    // ── Fountain sprite + water ripple ───────────────────────────────────────
+    // fountain.png is the full fountain (1518×1575) with transparent background.
+    // It sits in the world with its center at ~(50%, 53%) of the bg image.
+    // fountain-water.png is cropped from fountain.png — just the golden basin.
+    // It is placed at the same position and gets the ripple shader applied.
+
+    // World-space position of the fountain center
+    const fcX = bgX + 0.50 * bgW;
+    const fcY = bgY + 0.53 * bgH;
+
+    // Full fountain sprite — static, sits at depth 1 (above bg but below player)
+    const fountainW = bgW * 0.34;  // scale fountain to ~34% of world width
+    const fountainH = fountainW * (1575 / 1518); // preserve aspect ratio
+    const fountain  = this.add.image(fcX, fcY, 'fountain')
+      .setOrigin(0.5, 0.5)
+      .setDisplaySize(fountainW, fountainH)
+      .setDepth(1);
+
+    // Water-only crop — covers the basin area (y: 55–88% of fountain sprite)
+    // Origin 0.5,0.5 so we center it at the same point then shift down
+    const waterH = fountainH * (0.88 - 0.55);
+    const waterW = fountainW * (0.90 - 0.10);
+    const waterOffY = fountainH * ((0.55 + 0.88) / 2 - 0.5); // offset from center
+
+    const fw = this.add.image(fcX, fcY + waterOffY, 'fountain-water')
+      .setOrigin(0.5, 0.5)
+      .setDisplaySize(waterW, waterH)
       .setDepth(10000); // above foreground mask (9999)
 
-    // Apply ripple pipeline only if WebGL is available
     if (this.game.renderer.type === Phaser.WEBGL) {
       fw.setPipeline('RipplePipeline');
     }

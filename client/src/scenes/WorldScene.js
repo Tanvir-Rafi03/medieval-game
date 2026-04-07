@@ -15,18 +15,19 @@ import { playerState } from '../playerState.js';
 const SPEED = 180;
 const PLAYER_NAME = 'Adventurer'; // Phase 5: replace with real username
 
-// Spritesheet layout (768×616, 4 cols × 4 rows, 192×154 per frame, no margin):
+// Spritesheet layout (2048×2048, 4 cols × 4 rows, 512×512 per frame):
 //   Row 0 → walk-down  (frames 0–3)
 //   Row 1 → walk-left  (frames 4–7)
 //   Row 2 → walk-right (frames 8–11)
 //   Row 3 → walk-up    (frames 12–15)
 const IDLE_FRAMES = { down: 0, left: 4, right: 8, up: 12 };
 
-// Hitbox in unscaled frame pixels (192×154 frame)
-const BODY_W        = 80;
-const BODY_H        = 80;
-const BODY_OFFSET_X = 56;  // (192 - 80) / 2 → centered
-const BODY_OFFSET_Y = 60;  // below head
+// Hitbox in unscaled frame pixels (512×512 frame)
+// Character occupies center ~40% of frame width, bottom ~50% of height
+const BODY_W        = 200;
+const BODY_H        = 220;
+const BODY_OFFSET_X = 156;  // (512 - 200) / 2 → centered
+const BODY_OFFSET_Y = 260;  // character starts roughly halfway down the frame
 
 export default class WorldScene extends Phaser.Scene {
   constructor() {
@@ -55,7 +56,7 @@ export default class WorldScene extends Phaser.Scene {
 
     // ── Player sprite ───────────────────────────────────────────────────────
     this._sprite = this.physics.add.sprite(width / 2, height * 0.52, 'player', 0);
-    this._sprite.setScale(0.35);
+    this._sprite.setScale(0.13);  // 512px frame → ~67px on screen
     this._sprite.body.setSize(BODY_W, BODY_H);
     this._sprite.body.setOffset(BODY_OFFSET_X, BODY_OFFSET_Y);
     this._sprite.body.setCollideWorldBounds(true);

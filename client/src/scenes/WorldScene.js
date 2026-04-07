@@ -8,12 +8,12 @@ import { playerState } from '../playerState.js';
 const SPEED = 180;
 const PLAYER_NAME = 'Adventurer'; // Phase 5: replace with real username
 
-// Spritesheet row assumptions (3 frames each):
-//   Row 0 → walk-down  (frames 0–2)
-//   Row 1 → walk-left  (frames 3–5)
-//   Row 2 → walk-right (frames 6–8)
-//   Row 3 → walk-up    (frames 9–11)
-const IDLE_FRAMES = { down: 0, left: 3, right: 6, up: 9 };
+// Spritesheet layout (2816×1536, 6 cols × 4 rows, 469×384 per frame):
+//   Row 0 → walk-down  (frames 0–5)
+//   Row 1 → walk-left  (frames 6–11)
+//   Row 2 → walk-right (frames 12–17)
+//   Row 3 → walk-up    (frames 18–23)
+const IDLE_FRAMES = { down: 0, left: 6, right: 12, up: 18 };
 
 export default class WorldScene extends Phaser.Scene {
   constructor() {
@@ -39,9 +39,9 @@ export default class WorldScene extends Phaser.Scene {
 
     // ── Player sprite ───────────────────────────────────────────────────────
     this._sprite = this.physics.add.sprite(width / 2, height * 0.52, 'player', 0);
-    this._sprite.setScale(0.22);          // 341px frame → ~75px on screen
+    this._sprite.setScale(0.16);          // 469px frame → ~75px on screen
     this._sprite.body.setSize(80, 120);   // hitbox within the frame
-    this._sprite.body.setOffset(130, 120);
+    this._sprite.body.setOffset(195, 200);
     this._sprite.body.setCollideWorldBounds(true);
     this._sprite.setDepth(10);
 

@@ -2,12 +2,12 @@
 // Loads all game assets before WorldScene starts.
 // Shows a loading bar so the player knows assets are being fetched.
 //
-// Spritesheet layout assumption (player-sheet.jpg, 1024x1024):
-//   3 columns × 4 rows → frameWidth = 341, frameHeight = 256
-//   Row 0: walk-down  (frames 0–2)
-//   Row 1: walk-left  (frames 3–5)
-//   Row 2: walk-right (frames 6–8)
-//   Row 3: walk-up    (frames 9–11)
+// Spritesheet layout (player-sheet.jpg, 2816×1536):
+//   6 columns × 4 rows → frameWidth = 469, frameHeight = 384
+//   Row 0: walk-down  (frames 0–5)
+//   Row 1: walk-left  (frames 6–11)
+//   Row 2: walk-right (frames 12–17)
+//   Row 3: walk-up    (frames 18–23)
 
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -32,10 +32,10 @@ export default class PreloadScene extends Phaser.Scene {
 
     this.load.image('world', 'assets/world.jpg');
 
-    // 1024×1024 sheet, 3 cols × 4 rows
+    // 2816×1536 sheet, 6 cols × 4 rows
     this.load.spritesheet('player', 'assets/sprites/player-sheet.jpg', {
-      frameWidth: 341,
-      frameHeight: 256,
+      frameWidth: 469,
+      frameHeight: 384,
     });
   }
 
@@ -45,15 +45,15 @@ export default class PreloadScene extends Phaser.Scene {
 
     const rows = [
       { key: 'walk-down',  start: 0  },
-      { key: 'walk-left',  start: 3  },
-      { key: 'walk-right', start: 6  },
-      { key: 'walk-up',    start: 9  },
+      { key: 'walk-left',  start: 6  },
+      { key: 'walk-right', start: 12 },
+      { key: 'walk-up',    start: 18 },
     ];
 
     rows.forEach(({ key, start }) => {
       anims.create({
         key,
-        frames: anims.generateFrameNumbers('player', { start, end: start + 2 }),
+        frames: anims.generateFrameNumbers('player', { start, end: start + 5 }),
         frameRate: 8,
         repeat: -1,
       });

@@ -32,8 +32,6 @@ export default class PreloadScene extends Phaser.Scene {
     });
 
     this.load.image('world', 'assets/world.jpg');
-    this.load.image('fountain',       'assets/fountain.png');
-    this.load.image('fountain-water', 'assets/fountain-water.png');
 
     // 2048×2048 PNG with transparency, 4 cols × 4 rows → 512×512 per frame
     this.load.spritesheet('player', 'assets/sprites/player-sheet.png', {

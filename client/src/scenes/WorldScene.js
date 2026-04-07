@@ -11,6 +11,7 @@
 import { ZONES } from '../zones.js';
 import { WALLS, FOREGROUND_REGIONS } from '../collisions.js';
 import { playerState } from '../playerState.js';
+import { initWorldFX } from '../fx/WorldFX.js';
 
 const SPEED = 180;
 const PLAYER_NAME = 'Adventurer'; // Phase 5: replace with real username
@@ -50,6 +51,9 @@ export default class WorldScene extends Phaser.Scene {
     const bgY = (height - bgH) / 2;
     bg.setScale(bgScale).setPosition(bgX, bgY).setDepth(0);
     this._bgLayout = { x: bgX, y: bgY, w: bgW, h: bgH, scale: bgScale };
+
+    // ── World FX (torch flicker, fountain shimmer, potion glow, fireflies) ──
+    initWorldFX(this, this._bgLayout);
 
     // ── Collision walls ─────────────────────────────────────────────────────
     this._createWalls();

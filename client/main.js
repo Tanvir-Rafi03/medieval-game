@@ -6,6 +6,7 @@ import BootScene from './src/scenes/BootScene.js';
 import PreloadScene from './src/scenes/PreloadScene.js';
 import WorldScene from './src/scenes/WorldScene.js';
 import { initZonePanel } from './src/ui/ZonePanel.js';
+import './src/playerState.js'; // attaches window.playerState for console testing
 
 // Initialize HTML overlay panels (they listen for events from Phaser scenes)
 initZonePanel();

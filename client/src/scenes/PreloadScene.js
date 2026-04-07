@@ -2,9 +2,9 @@
 // Loads all game assets before WorldScene starts.
 // Shows a loading bar so the player knows assets are being fetched.
 //
-// Spritesheet layout (player-sheet.png, 768×616, RGBA):
+// Spritesheet layout (player-sheet.png, 2048×2048, RGBA):
 //   4 columns × 4 rows, no margin, no spacing
-//   → frameWidth = 192, frameHeight = 154
+//   → frameWidth = 512, frameHeight = 512
 //   Row 0: walk-down  (frames 0–3)
 //   Row 1: walk-left  (frames 4–7)
 //   Row 2: walk-right (frames 8–11)

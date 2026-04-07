@@ -18,6 +18,7 @@ export function initWorldFX(scene, bgLayout) {
   _addTorches(scene, bw, bh, px);
   _addFountainFX(scene, bw, bh, px);
   _addFountainWater(scene, bw, bh, px);
+  _addFountainParticles(scene, bw, bh, px);
   _addPotionGlow(scene, bw, bh, px);
   _addWindowPulse(scene, bw, bh, px);
   _addFireflies(scene, bx, by, bw, bh);
@@ -251,6 +252,91 @@ function _spawnWaterRipple(scene, cx, cy, rw, rh, delay, depth) {
 }
 
 // ── Potion Lab glow ───────────────────────────────────────────────────────────
+// ── Fountain golden particles ─────────────────────────────────────────────────
+// Measured fountain center from world.jpg pixel scan: (53.3%, 52.4%)
+// Particles rise from the water surface, spread outward, fade out above.
+// Uses generated circle textures — no external assets needed.
+// Depth 10000 so particles appear above the foreground mask.
+function _addFountainParticles(scene, bw, bh, px) {
+  const center = px(0.533, 0.524); // pixel-measured fountain water center
+  const scale  = bw / 900;         // normalise sizes to world scale
+
+  // ── Generate a soft glowing circle texture ──────────────────────────────
+  const g = scene.make.graphics({ add: false });
+  // Outer soft glow ring
+  g.fillStyle(0xffd700, 0.15);
+  g.fillCircle(12, 12, 12);
+  // Mid ring
+  g.fillStyle(0xffe566, 0.4);
+  g.fillCircle(12, 12, 7);
+  // Bright core
+  g.fillStyle(0xffffff, 0.9);
+  g.fillCircle(12, 12, 3);
+  g.generateTexture('gold-particle', 24, 24);
+  g.destroy();
+
+  // ── Emitter 1: main upward jet — rises from statue top ─────────────────
+  // Statue top is slightly above and center of the basin
+  const jetCenter = { x: center.x, y: center.y - bw * 0.055 };
+
+  scene.add.particles(jetCenter.x, jetCenter.y, 'gold-particle', {
+    // Tight upward cone — isometric up = slightly left+up
+    angle:    { min: 255, max: 285 },
+    speed:    { min: 30 * scale, max: 70 * scale },
+    gravityY: 40 * scale,           // gentle gravity so they arc naturally
+    lifespan: { min: 800, max: 1400 },
+    scale:    { start: 0.5 * scale, end: 0 },
+    alpha:    { start: 0.9, end: 0 },
+    tint:     [0xffd700, 0xffe566, 0xffcc00, 0xffffff],
+    frequency: 40,
+    quantity:  2,
+    depth:     10000,
+    blendMode: 'ADD',
+  });
+
+  // ── Emitter 2: basin surface — drift out radially from water surface ────
+  // Spawns across the elliptical basin, drifts upward slowly
+  const basinRW = bw * 0.08;
+  const basinRH = basinRW * 0.38; // flatten for isometric
+
+  scene.add.particles(center.x, center.y, 'gold-particle', {
+    emitZone: {
+      type:   'random',
+      source: new Phaser.Geom.Ellipse(0, 0, basinRW * 2, basinRH * 2),
+    },
+    angle:    { min: 240, max: 300 },
+    speed:    { min: 5 * scale, max: 20 * scale },
+    gravityY: -8 * scale,           // slight upward drift — floating magic dust
+    lifespan: { min: 600, max: 1200 },
+    scale:    { start: 0.35 * scale, end: 0 },
+    alpha:    { start: 0.7, end: 0 },
+    tint:     [0xffd700, 0xffaa00, 0xffe566],
+    frequency: 55,
+    quantity:  3,
+    depth:     10001,
+    blendMode: 'ADD',
+  });
+
+  // ── Emitter 3: splash arcs — particles arc outward and fall back ────────
+  // 4 arc directions matching isometric fountain geometry
+  const arcAngles = [210, 240, 300, 330];
+  arcAngles.forEach((angle, i) => {
+    scene.add.particles(jetCenter.x, jetCenter.y, 'gold-particle', {
+      angle:    { min: angle - 10, max: angle + 10 },
+      speed:    { min: 25 * scale, max: 50 * scale },
+      gravityY: 55 * scale,
+      lifespan: { min: 500, max: 900 },
+      scale:    { start: 0.3 * scale, end: 0 },
+      alpha:    { start: 0.6, end: 0 },
+      tint:     [0xffd700, 0xffcc44],
+      frequency: 80 + i * 10,
+      quantity:  1,
+      depth:     10000,
+      blendMode: 'ADD',
+    });
+  });
+}
+
 function _addPotionGlow(scene, bw, bh, px) {
   const potions = [
     { fx: 0.10, fy: 0.32, color: 0x00ff88, label: 'green'  }, // bubbling cauldron

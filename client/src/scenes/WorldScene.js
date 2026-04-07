@@ -53,12 +53,12 @@ export default class WorldScene extends Phaser.Scene {
     this._bgLayout = { x: bgX, y: bgY, w: bgW, h: bgH, scale: bgScale };
 
     // ── Fountain water — ripple shader sprite ────────────────────────────────
-    // fountain-water.png is cropped from world.jpg at fractions (0.34,0.43)→(0.65,0.65)
-    // We place it back at the same world position and apply the ripple pipeline.
-    const fwX = bgX + 0.34 * bgW;
-    const fwY = bgY + 0.43 * bgH;
-    const fwW = (0.65 - 0.34) * bgW;
-    const fwH = (0.65 - 0.43) * bgH;
+    // fountain-water.png is cropped from world.jpg at exactly (0.38,0.54)→(0.62,0.63)
+    // — just the flat golden water basin, not the statue above it.
+    const fwX = bgX + 0.38 * bgW;
+    const fwY = bgY + 0.54 * bgH;
+    const fwW = (0.62 - 0.38) * bgW;
+    const fwH = (0.63 - 0.54) * bgH;
     const fw  = this.add.image(fwX, fwY, 'fountain-water')
       .setOrigin(0, 0)
       .setDisplaySize(fwW, fwH)

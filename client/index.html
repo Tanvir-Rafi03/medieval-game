@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- client/index.html -->
+  <!-- Minimal HTML shell. Phaser mounts into #game-container. -->
+  <!-- #ui-layer floats above the canvas for all HTML overlay panels. -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medieval Game</title>
+
+  <!-- Medieval UI font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Phaser canvas is injected here — sits BELOW the UI layer -->
+  <div id="game-container"></div>
+
+  <!-- All HTML overlay panels (HUD, menus, dialogs) mount here -->
+  <div id="ui-layer"></div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

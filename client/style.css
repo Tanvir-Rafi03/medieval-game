@@ -1,0 +1,52 @@
+/* client/style.css */
+/* Global styles and CSS custom properties for the Medieval Game color palette. */
+/* No CSS framework — raw variables keep things portable and easy to theme. */
+
+:root {
+  --color-navy:       #1a1a2e; /* deep dark background */
+  --color-parchment:  #f4e4c1; /* warm parchment tan for UI panels */
+  --color-gold:       #c9a84c; /* medieval gold for headings and accents */
+  --color-forest:     #2d6a4f; /* forest green for nature elements */
+  --color-stone:      #6b6b6b; /* stone gray for borders and disabled states */
+  --color-crimson:    #8b1a1a; /* deep red for danger / health */
+
+  --font-medieval: 'Cinzel', serif;
+  --font-body: system-ui, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-navy);
+}
+
+/* Phaser canvas container — fills the window, sits behind ui-layer */
+#game-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+#game-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* UI overlay — on top of canvas, pointer-events: none by default */
+/* Individual panels inside should set pointer-events: auto as needed */
+#ui-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  font-family: var(--font-medieval);
+  color: var(--color-parchment);
+}

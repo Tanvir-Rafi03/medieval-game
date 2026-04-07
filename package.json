@@ -1,0 +1,24 @@
+{
+  "name": "medieval-game",
+  "version": "1.0.0",
+  "description": "Medieval open-world social web app — Habitica meets Gather.town with a medieval skin",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "server": "nodemon server/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "phaser": "^3.90.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "vite": "^8.0.6"
+  }
+}

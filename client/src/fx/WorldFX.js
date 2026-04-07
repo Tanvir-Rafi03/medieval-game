@@ -152,115 +152,99 @@ function _spawnFountainSparkles(scene, cx, cy, radius) {
   }
 }
 
-// ── Fountain water simulation ─────────────────────────────────────────────────
-// Uses Phaser's particle emitter to fake animated water:
-//   1. Upward spray jets from the dragon statue top
-//   2. Droplets arcing outward and landing in the basin
-//   3. Splash rings where droplets land
-//   4. Basin surface shimmer (fast glinting particles)
+// ── Fountain water animation ──────────────────────────────────────────────────
+// Animates the golden water in the basin using layered tweened ellipses.
+// All objects are at depth 10000+ so they render ABOVE the foreground mask (9999).
+// The fountain basin in the world image sits at roughly (0.48, 0.57).
 function _addFountainWater(scene, bw, bh, px) {
-  const center = px(0.48, 0.51); // top of fountain statue
-  const basin  = px(0.48, 0.56); // water surface of basin
+  const basin  = px(0.48, 0.57); // center of the golden water surface
+  const rw     = bw * 0.10;      // basin half-width
+  const rh     = rw * 0.38;      // flatten for isometric perspective
+  const DEPTH  = 10000;          // must be above foreground mask (9999)
 
-  // Create a tiny white circle texture for water particles
-  const gfx = scene.make.graphics({ add: false });
-
-  // Drop shape — small soft circle
-  gfx.fillStyle(0xffffff, 1);
-  gfx.fillCircle(4, 4, 4);
-  gfx.generateTexture('water-drop', 8, 8);
-
-  // Shimmer shape — tiny bright dot
-  gfx.clear();
-  gfx.fillStyle(0xffffff, 1);
-  gfx.fillCircle(2, 2, 2);
-  gfx.generateTexture('water-shimmer', 4, 4);
-  gfx.destroy();
-
-  const scale = bw / 800; // normalise to reference width
-
-  // ── 1. Central upward jet — straight up spray ──────────────────────────
-  scene.add.particles(center.x, center.y, 'water-drop', {
-    speed:     { min: 40 * scale, max: 80 * scale },
-    angle:     { min: 250, max: 290 },   // mostly upward (270 = up in Phaser)
-    gravityY:  160 * scale,
-    lifespan:  { min: 400, max: 700 },
-    scale:     { start: 0.6 * scale, end: 0 },
-    alpha:     { start: 0.85, end: 0 },
-    tint:      [0xaaddff, 0xc8e8ff, 0xffd700, 0xffe566], // blue-white + gold glint
-    frequency: 30,
-    quantity:  2,
-    depth:     9998,
+  // ── Layer 1: base golden glow — slow breathe ────────────────────────────
+  const base = scene.add.ellipse(basin.x, basin.y, rw * 2, rh * 2, 0xffc200, 0.28).setDepth(DEPTH);
+  scene.tweens.add({
+    targets:  base,
+    alpha:    { from: 0.18, to: 0.38 },
+    scaleX:   { from: 0.95, to: 1.05 },
+    duration: 1600,
+    yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
   });
 
-  // ── 2. Arcing droplets — spray out in an isometric arc pattern ──────────
-  // Four jets angled outward to simulate the dragon statue spraying around
-  const jetAngles = [230, 250, 290, 310]; // angled up-left, up, up-right
-  jetAngles.forEach((angle) => {
-    scene.add.particles(center.x, center.y, 'water-drop', {
-      speed:    { min: 55 * scale, max: 95 * scale },
-      angle:    { min: angle - 8, max: angle + 8 },
-      gravityY: 200 * scale,
-      lifespan: { min: 500, max: 850 },
-      scale:    { start: 0.45 * scale, end: 0 },
-      alpha:    { start: 0.7, end: 0 },
-      tint:     [0x88ccff, 0xaaddff, 0xffd700],
-      frequency: 60,
-      quantity:  1,
-      depth:     9998,
+  // ── Layer 2: bright core — faster shimmer ───────────────────────────────
+  const core = scene.add.ellipse(basin.x, basin.y, rw * 1.1, rh * 1.1, 0xffe566, 0.35).setDepth(DEPTH + 1);
+  scene.tweens.add({
+    targets:  core,
+    alpha:    { from: 0.20, to: 0.50 },
+    scaleX:   { from: 0.88, to: 1.12 },
+    scaleY:   { from: 0.88, to: 1.12 },
+    duration: 900,
+    yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    delay: 200,
+  });
+
+  // ── Layer 3: wave bands — 4 horizontal ellipses sweeping across ─────────
+  // Each one slides left→right at a different phase, simulating water movement
+  const waveColors = [0xffd700, 0xffcc00, 0xffe080, 0xffc840];
+  waveColors.forEach((color, i) => {
+    const wave = scene.add.ellipse(
+      basin.x - rw * 0.3 + i * rw * 0.2,
+      basin.y - rh * 0.1 + i * rh * 0.06,
+      rw * 0.7, rh * 0.4,
+      color, 0.18,
+    ).setDepth(DEPTH + 2);
+
+    scene.tweens.add({
+      targets:  wave,
+      x:        { from: basin.x - rw * 0.4, to: basin.x + rw * 0.4 },
+      alpha:    { from: 0.08, to: 0.28 },
+      duration: 1800 + i * 300,
+      yoyo: true, repeat: -1,
+      ease: 'Sine.easeInOut',
+      delay: i * 220,
     });
   });
 
-  // ── 3. Basin surface shimmer — fast glinting dots on the water surface ──
-  const basinR = bw * 0.055;
-  scene.add.particles(basin.x, basin.y, 'water-shimmer', {
-    // Spawn across the elliptical basin surface
-    emitZone: {
-      type:   'random',
-      source: new Phaser.Geom.Ellipse(0, 0, basinR * 2, basinR * 0.7),
-    },
-    speed:    { min: 0, max: 4 * scale },
-    angle:    { min: 0, max: 360 },
-    lifespan: { min: 200, max: 500 },
-    scale:    { start: 0.8 * scale, end: 0 },
-    alpha:    { start: 0, end: 0 },  // controlled by tween below via custom alpha
-    tint:     [0xaaddff, 0xffd700, 0xffffff, 0x88ccff],
-    frequency: 40,
-    quantity:  3,
-    depth:     9002, // above bg, behind foreground mask
-    alpha:     { start: 0.9, end: 0 },
+  // ── Layer 4: highlight streak — bright line sliding across surface ───────
+  const streak = scene.add.ellipse(basin.x, basin.y - rh * 0.1, rw * 0.5, rh * 0.18, 0xffffff, 0.22).setDepth(DEPTH + 3);
+  scene.tweens.add({
+    targets:  streak,
+    x:        { from: basin.x - rw * 0.5, to: basin.x + rw * 0.5 },
+    alpha:    { from: 0.0, to: 0.30 },
+    duration: 1200,
+    yoyo: true, repeat: -1,
+    ease: 'Quad.easeInOut',
+    delay: 600,
   });
 
-  // ── 4. Ripple rings on basin surface — water landing effect ─────────────
-  // More frequent, smaller, blue-tinted version of the gold ripples
+  // ── Layer 5: expanding ripple rings ─────────────────────────────────────
   for (let i = 0; i < 4; i++) {
-    _spawnWaterRipple(scene, basin.x, basin.y, basinR * 0.9, i * 600);
+    _spawnWaterRipple(scene, basin.x, basin.y, rw, rh, i * 700, DEPTH + 4);
   }
 }
 
-function _spawnWaterRipple(scene, cx, cy, maxR, delay) {
-  // Offset each ring randomly within the basin so they look natural
-  const ox = Phaser.Math.Between(-maxR * 0.3, maxR * 0.3);
-  const oy = Phaser.Math.Between(-maxR * 0.15, maxR * 0.15);
-  const ring = scene.add.ellipse(cx + ox, cy + oy, 0, 0, 0x88ccff, 0)
-    .setStrokeStyle(1.5, 0x88ccff, 0.7)
-    .setDepth(9001);
+function _spawnWaterRipple(scene, cx, cy, rw, rh, delay, depth) {
+  const ring = scene.add.ellipse(cx, cy, 0, 0, 0xffd700, 0)
+    .setStrokeStyle(1.5, 0xffd700, 0.7)
+    .setDepth(depth);
 
   const expand = () => {
-    // Re-randomise position each cycle
-    ring.x = cx + Phaser.Math.Between(-maxR * 0.3, maxR * 0.3);
-    ring.y = cy + Phaser.Math.Between(-maxR * 0.15, maxR * 0.15);
-    ring.width  = 0;
-    ring.height = 0;
-    ring.setAlpha(0.7);
+    const ox = Phaser.Math.FloatBetween(-rw * 0.25, rw * 0.25);
+    const oy = Phaser.Math.FloatBetween(-rh * 0.2, rh * 0.2);
+    ring.x = cx + ox;
+    ring.y = cy + oy;
+    ring.width  = rw * 0.2;
+    ring.height = rh * 0.2;
+    ring.setAlpha(0.8);
     scene.tweens.add({
       targets:  ring,
-      width:    maxR * 2,
-      height:   maxR * 0.65,
+      width:    rw * 1.8,
+      height:   rh * 1.8,
       alpha:    0,
-      duration: 1200,
+      duration: 1400,
       ease:     'Quad.easeOut',
-      onComplete: () => scene.time.delayedCall(Phaser.Math.Between(200, 600), expand),
+      onComplete: () => scene.time.delayedCall(Phaser.Math.Between(100, 500), expand),
     });
   };
   scene.time.delayedCall(delay, expand);

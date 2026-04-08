@@ -32,14 +32,6 @@ export const ZONES = [
     w: 0.38, h: 0.38,
   },
   {
-    id: 'fountain',
-    name: 'Arcane Fountain',
-    description: 'The heart of the town. Rest here to restore energy and view your daily summary.',
-    icon: '✨',
-    x: 0.34, y: 0.38,
-    w: 0.28, h: 0.26,
-  },
-  {
     id: 'curiosities',
     name: "Curiosities Shop",
     description: 'Mysterious wares for sale. Spend earned gold on cosmetics and player upgrades.',

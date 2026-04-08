@@ -1,34 +1,23 @@
 // client/src/scenes/WorldScene.js
-// Main game scene. World background, animated player sprite, WASD movement,
-// interactive building zones, name tag, camera polish.
-//
-// Depth / occlusion system:
+// Three-layer depth system:
 //   depth 0     → world background image
-//   depth 1–500 → player (sprite.y, so walking down = higher depth = in front)
-//   depth 501   → name tag (always just above player)
-//   depth 9999  → foreground mask (front faces of buildings/fountain — always on top)
+//   depth 1–500 → player (y-sorted: walking down = higher depth = drawn in front)
+//   depth 501   → name tag
+//   depth 9999  → foreground mask (building fronts + lamp post — always above player)
 
-import { ZONES } from '../zones.js';
-import { WALLS, FOREGROUND_REGIONS, DEBUG_WALLS } from '../collisions.js';
-import { playerState } from '../playerState.js';
-import { initWorldFX } from '../fx/WorldFX.js';
+import { ZONES }                              from '../zones.js';
+import { WALLS, FOREGROUND_REGIONS, DEBUG_WALLS, DEBUG_FOREGROUND } from '../collisions.js';
+import { playerState }                        from '../playerState.js';
 
-const SPEED = 180;
-const PLAYER_NAME = 'Adventurer'; // Phase 5: replace with real username
+const SPEED       = 180;
+const PLAYER_NAME = 'Adventurer';
 
-// Spritesheet layout (2048×2048, 4 cols × 4 rows, 512×512 per frame):
-//   Row 0 → walk-down  (frames 0–3)
-//   Row 1 → walk-left  (frames 4–7)
-//   Row 2 → walk-right (frames 8–11)
-//   Row 3 → walk-up    (frames 12–15)
 const IDLE_FRAMES = { down: 0, left: 4, right: 8, up: 12 };
 
-// Hitbox in unscaled frame pixels (512×512 frame)
-// Character occupies center ~40% of frame width, bottom ~50% of height
 const BODY_W        = 200;
 const BODY_H        = 220;
-const BODY_OFFSET_X = 156;  // (512 - 200) / 2 → centered
-const BODY_OFFSET_Y = 260;  // character starts roughly halfway down the frame
+const BODY_OFFSET_X = 156;
+const BODY_OFFSET_Y = 260;
 
 export default class WorldScene extends Phaser.Scene {
   constructor() {
@@ -42,7 +31,7 @@ export default class WorldScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    // ── World background ────────────────────────────────────────────────────
+    // ── Background (depth 0) ─────────────────────────────────────────────────
     const bg = this.add.image(0, 0, 'world').setOrigin(0, 0);
     const bgScale = Math.max(width / bg.width, height / bg.height);
     const bgW = bg.width  * bgScale;
@@ -52,33 +41,25 @@ export default class WorldScene extends Phaser.Scene {
     bg.setScale(bgScale).setPosition(bgX, bgY).setDepth(0);
     this._bgLayout = { x: bgX, y: bgY, w: bgW, h: bgH, scale: bgScale };
 
-
-    // ── World FX (torch flicker, fountain shimmer, potion glow, fireflies) ──
-    initWorldFX(this, this._bgLayout);
-
-    // ── Collision walls ─────────────────────────────────────────────────────
+    // ── Physics walls ────────────────────────────────────────────────────────
     this._createWalls();
 
-    // ── Player sprite ───────────────────────────────────────────────────────
+    // ── Player (depth = sprite.y) ────────────────────────────────────────────
     this._sprite = this.physics.add.sprite(width / 2, height * 0.52, 'player', 0);
-    this._sprite.setScale(0.13);  // 512px frame → ~67px on screen
+    this._sprite.setScale(0.13);
     this._sprite.body.setSize(BODY_W, BODY_H);
     this._sprite.body.setOffset(BODY_OFFSET_X, BODY_OFFSET_Y);
     this._sprite.body.setCollideWorldBounds(true);
-    // Depth = y so the player sorts correctly as they move up/down the world
     this._sprite.setDepth(this._sprite.y);
 
-    // ── Collide player with walls ────────────────────────────────────────────
     this.physics.add.collider(this._sprite, this._walls);
 
-    // ── Foreground mask (front faces of buildings — renders above player) ───
+    // ── Foreground mask (lamp post — always above player) ────────────────────
     this._createForeground();
 
-    // ── Name tag — parchment scroll banner ──────────────────────────────────
-    // Scroll background (rounded rectangle in parchment color)
+    // ── Name tag ─────────────────────────────────────────────────────────────
     this._nameTagBg = this.add.graphics();
-    // Label text
-    this._nameTag = this.add.text(0, 0, PLAYER_NAME, {
+    this._nameTag   = this.add.text(0, 0, PLAYER_NAME, {
       fontFamily: '"Cinzel", serif',
       fontSize:   '9px',
       color:      '#2a1a00',
@@ -86,7 +67,7 @@ export default class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5, 0.5);
     this._drawNameTag();
 
-    // ── Input ────────────────────────────────────────────────────────────────
+    // ── Input ─────────────────────────────────────────────────────────────────
     this._cursors = this.input.keyboard.createCursorKeys();
     this._wasd    = this.input.keyboard.addKeys({
       up:    Phaser.Input.Keyboard.KeyCodes.W,
@@ -99,10 +80,9 @@ export default class WorldScene extends Phaser.Scene {
     this.cameras.main.setBounds(bgX, bgY, bgW, bgH);
     this.cameras.main.startFollow(this._sprite, true, 0.1, 0.1);
 
-    // ── Parallax — subtle mouse offset applied on top of camera follow ───────
-    // Max offset in pixels — keeps it subtle so it doesn't feel disorienting
-    this._parallaxMax = 18;
-    this._parallaxTarget = { x: 0, y: 0 };
+    // ── Parallax ─────────────────────────────────────────────────────────────
+    this._parallaxMax     = 18;
+    this._parallaxTarget  = { x: 0, y: 0 };
     this._parallaxCurrent = { x: 0, y: 0 };
     this.input.on('pointermove', (ptr) => {
       const cx = this.scale.width  / 2;
@@ -111,10 +91,10 @@ export default class WorldScene extends Phaser.Scene {
       this._parallaxTarget.y = ((ptr.y - cy) / cy) * -this._parallaxMax;
     });
 
-    // ── Interactive zones ────────────────────────────────────────────────────
+    // ── Interactive zones ─────────────────────────────────────────────────────
     this._createZones();
 
-    // ── Tooltip DOM element ──────────────────────────────────────────────────
+    // ── Tooltip ──────────────────────────────────────────────────────────────
     this._tooltipEl = document.createElement('div');
     this._tooltipEl.id = 'zone-tooltip';
     Object.assign(this._tooltipEl.style, {
@@ -136,20 +116,18 @@ export default class WorldScene extends Phaser.Scene {
     // ── Vignette ─────────────────────────────────────────────────────────────
     this._createVignette();
 
-    // ── React to playerState changes ─────────────────────────────────────────
+    // ── Player state ──────────────────────────────────────────────────────────
     this._unsubState = playerState.onChange((state) => {
       if (state === 'working')  this._enterWorking();
       if (state === 'free')     this._exitWorking();
       if (state === 'on-break') this._exitWorking();
     });
-
     if (playerState.get() === 'working') this._enterWorking();
   }
 
-  // ── Collision walls ────────────────────────────────────────────────────────
+  // ── Physics walls ──────────────────────────────────────────────────────────
   _createWalls() {
     const { x: bx, y: by, w: bw, h: bh } = this._bgLayout;
-
     this._walls = this.physics.add.staticGroup();
 
     WALLS.forEach((wall) => {
@@ -158,59 +136,56 @@ export default class WorldScene extends Phaser.Scene {
       const ww = wall.w * bw;
       const wh = wall.h * bh;
 
-      // Invisible static rectangle — Phaser needs a real game object for arcade physics
       const body = this.add.rectangle(wx + ww / 2, wy + wh / 2, ww, wh, 0x000000, 0);
-      this.physics.add.existing(body, true); // true = static
+      this.physics.add.existing(body, true);
       this._walls.add(body);
 
       if (DEBUG_WALLS) {
-        this.add.rectangle(wx + ww/2, wy + wh/2, ww, wh).setStrokeStyle(2, 0xff0000, 0.7).setDepth(9998);
+        this.add.rectangle(wx + ww / 2, wy + wh / 2, ww, wh)
+          .setStrokeStyle(2, 0xff0000, 0.8)
+          .setDepth(9998);
       }
     });
   }
 
+  // ── Name tag ──────────────────────────────────────────────────────────────
   // ── Foreground mask ────────────────────────────────────────────────────────
-  // Renders the world image a second time, masked to only show the "front faces"
-  // of buildings and the fountain. Sits at depth 9999 so it always appears above
-  // the player — creating the illusion that the player walks behind structures.
   _createForeground() {
     const { x: bx, y: by, w: bw, h: bh, scale: bgScale } = this._bgLayout;
 
-    // Second copy of the world image at max depth
     const fg = this.add.image(bx, by, 'world')
       .setOrigin(0, 0)
       .setScale(bgScale)
       .setDepth(9999);
 
-    // Build mask — only the foreground regions are visible through it
     const mask = this.make.graphics({ add: false });
     mask.fillStyle(0xffffff);
 
     FOREGROUND_REGIONS.forEach((r) => {
-      const rx = bx + r.x * bw;
-      const ry = by + r.y * bh;
-      mask.fillRect(rx, ry, r.w * bw, r.h * bh);
+      const rx = bx + r.x * bw, ry = by + r.y * bh;
+      const rw = r.w * bw,      rh = r.h * bh;
+      mask.fillRect(rx, ry, rw, rh);
+
+      if (DEBUG_FOREGROUND) {
+        this.add.rectangle(rx + rw / 2, ry + rh / 2, rw, rh)
+          .setStrokeStyle(2, 0xff0000, 0.8)
+          .setDepth(10000);
+      }
     });
 
     fg.setMask(mask.createGeometryMask());
-    this._fgImage = fg;
-    this._fgMask  = mask;
   }
 
-  // ── Name tag scroll banner ────────────────────────────────────────────────
   _drawNameTag() {
     const pad = { x: 8, y: 3 };
     const tw  = this._nameTag.width  + pad.x * 2;
     const th  = this._nameTag.height + pad.y * 2;
     const g   = this._nameTagBg;
     g.clear();
-    // Parchment fill
     g.fillStyle(0xf0d89a, 0.92);
     g.fillRoundedRect(-tw / 2, -th / 2, tw, th, 3);
-    // Gold border
     g.lineStyle(1, 0xc9a84c, 1);
     g.strokeRoundedRect(-tw / 2, -th / 2, tw, th, 3);
-    // Small decorative notches on left & right edges (scroll end caps)
     g.fillStyle(0xc9a84c, 0.8);
     g.fillRect(-tw / 2 - 2, -2, 3, 4);
     g.fillRect( tw / 2 - 1, -2, 3, 4);
@@ -237,34 +212,25 @@ export default class WorldScene extends Phaser.Scene {
     this._sprite.anims.stop();
     this._sprite.setFrame(IDLE_FRAMES.down + 1);
     this._sprite.body.setVelocity(0);
-
     this._bobbingTween = this.tweens.add({
-      targets:  this._sprite,
-      y:        this._sprite.y - 2,
-      duration: 1500,
-      yoyo:     true,
-      repeat:   -1,
-      ease:     'Sine.easeInOut',
+      targets: this._sprite, y: this._sprite.y - 2,
+      duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
   }
 
   _exitWorking() {
-    if (this._bobbingTween) {
-      this._bobbingTween.stop();
-      this._bobbingTween = null;
-    }
+    this._bobbingTween?.stop();
+    this._bobbingTween = null;
     this._sprite.setFrame(IDLE_FRAMES[this._lastDir]);
   }
 
-  // ── Interactive zones ──────────────────────────────────────────────────────
+  // ── Zones ─────────────────────────────────────────────────────────────────
   _createZones() {
     const { x: bx, y: by, w: bw, h: bh } = this._bgLayout;
 
     ZONES.forEach((zone) => {
-      const rx = bx + zone.x * bw;
-      const ry = by + zone.y * bh;
-      const rw = zone.w * bw;
-      const rh = zone.h * bh;
+      const rx = bx + zone.x * bw, ry = by + zone.y * bh;
+      const rw = zone.w * bw,      rh = zone.h * bh;
 
       const rect = this.add
         .rectangle(rx + rw / 2, ry + rh / 2, rw, rh, 0xffffff, 0)
@@ -281,9 +247,8 @@ export default class WorldScene extends Phaser.Scene {
   }
 
   _highlightZone(rect, on) {
-    on
-      ? rect.setFillStyle(0xc9a84c, 0.12).setStrokeStyle(2, 0xc9a84c, 0.7)
-      : rect.setFillStyle(0xffffff, 0).setStrokeStyle(0);
+    on ? rect.setFillStyle(0xc9a84c, 0.12).setStrokeStyle(2, 0xc9a84c, 0.7)
+       : rect.setFillStyle(0xffffff, 0).setStrokeStyle(0);
   }
 
   _showTooltip(x, y, name) {
@@ -291,30 +256,22 @@ export default class WorldScene extends Phaser.Scene {
     this._tooltipEl.style.display = 'block';
     this._moveTooltip(x, y);
   }
-
   _moveTooltip(x, y) {
     this._tooltipEl.style.left = `${x + 14}px`;
     this._tooltipEl.style.top  = `${y - 10}px`;
   }
+  _hideTooltip() { this._tooltipEl.style.display = 'none'; }
+  _openZonePanel(zone) { window.dispatchEvent(new CustomEvent('zone:open', { detail: zone })); }
 
-  _hideTooltip() {
-    this._tooltipEl.style.display = 'none';
-  }
-
-  _openZonePanel(zone) {
-    window.dispatchEvent(new CustomEvent('zone:open', { detail: zone }));
-  }
-
-  // ── Update loop ────────────────────────────────────────────────────────────
+  // ── Update ────────────────────────────────────────────────────────────────
   update() {
-    // Parallax — smoothly lerp camera offset toward mouse position
+    // Parallax
     this._parallaxCurrent.x = Phaser.Math.Linear(this._parallaxCurrent.x, this._parallaxTarget.x, 0.05);
     this._parallaxCurrent.y = Phaser.Math.Linear(this._parallaxCurrent.y, this._parallaxTarget.y, 0.05);
     this.cameras.main.setFollowOffset(this._parallaxCurrent.x, this._parallaxCurrent.y);
 
-    // Y-based depth sorting — higher y = further down screen = drawn in front
+    // Depth sort
     this._sprite.setDepth(this._sprite.y);
-    // Name tag scroll follows sprite, always just above head
     const tagY = this._sprite.y - this._sprite.displayHeight / 2 - 10;
     this._nameTagBg.setPosition(this._sprite.x, tagY).setDepth(this._sprite.y + 1);
     this._nameTag.setPosition(this._sprite.x, tagY).setDepth(this._sprite.y + 2);
@@ -330,18 +287,15 @@ export default class WorldScene extends Phaser.Scene {
     const down  = this._cursors.down.isDown  || this._wasd.down.isDown;
 
     let vx = 0, vy = 0;
-
     if (left)  { vx -= SPEED;       vy += SPEED * 0.25; }
     if (right) { vx += SPEED;       vy -= SPEED * 0.25; }
     if (up)    { vx += SPEED * 0.5; vy -= SPEED; }
     if (down)  { vx -= SPEED * 0.5; vy += SPEED; }
-
     if ((left || right) && (up || down)) { vx *= 0.707; vy *= 0.707; }
 
     this._sprite.body.setVelocity(vx, vy);
 
     const moving = vx !== 0 || vy !== 0;
-
     if (moving) {
       if      (left  && !right) { this._sprite.anims.play('walk-left',  true); this._lastDir = 'left'; }
       else if (right && !left)  { this._sprite.anims.play('walk-right', true); this._lastDir = 'right'; }

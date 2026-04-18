@@ -5,3 +5,4 @@ generated_imgs/
 *.log
 .DS_Store
 .env
+.claude/

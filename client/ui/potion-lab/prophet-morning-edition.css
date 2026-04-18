@@ -1,0 +1,410 @@
+/* prophet-morning-edition.css — Morning Edition 3-column section */
+
+/* ── Section wrapper ──────────────────────────────────────────────────────── */
+
+.dp-me-section {
+  margin: 0 0 14px;
+}
+
+/* ── Section header ───────────────────────────────────────────────────────── */
+
+.dp-me-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dp-me-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c9a84c88, transparent);
+}
+
+.dp-me-title {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: #c9a84c;
+  white-space: nowrap;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* ── 3-column grid ────────────────────────────────────────────────────────── */
+
+.dp-me-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  background: #c9a84c33;
+  border: 1px solid #c9a84c44;
+  border-radius: 1px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.dp-me-col {
+  padding: 14px 16px;
+  background: #f5e6c8;
+  position: relative;
+  border-right: 1px solid #c9a84c33;
+}
+
+.dp-me-col:last-child {
+  border-right: none;
+}
+
+/* ── Column headers ───────────────────────────────────────────────────────── */
+
+.dp-me-col-header {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #c9a84c;
+  border-bottom: 1px solid #c9a84c44;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+/* ── Column 1: Dumbledore's Wisdom ───────────────────────────────────────── */
+
+.dp-wisdom-col {
+  background: #f5e6c8;
+}
+
+.dp-ad-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #3d1a6e;
+  border: 2px solid #c9a84c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #c9a84c;
+  margin: 0 auto 12px;
+  flex-shrink: 0;
+}
+
+.dp-quote-wrap {
+  position: relative;
+  padding-top: 4px;
+}
+
+/* Large decorative opening quote mark */
+.dp-quote-wrap::before {
+  content: '\201C';
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 72px;
+  color: #c9a84c2a;
+  position: absolute;
+  top: -18px;
+  left: -8px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.dp-quote-text {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #1a1208;
+  position: relative;
+  z-index: 1;
+}
+
+.dp-quote-rule {
+  height: 1px;
+  background: #c9a84c44;
+  margin: 10px 0 8px;
+}
+
+.dp-quote-context {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 11px;
+  color: #7a6040;
+  padding-left: 10px;
+  border-left: 2px solid #c9a84c44;
+  line-height: 1.55;
+}
+
+/* ── Column 2: Owl Post ───────────────────────────────────────────────────── */
+
+.dp-owl-col {
+  background: #ede0b0;
+}
+
+/* CSS envelope icon — rectangle body + triangle flap */
+.dp-envelope {
+  width: 44px;
+  height: 30px;
+  margin: 0 auto 8px;
+  position: relative;
+}
+
+.dp-env-body {
+  width: 100%;
+  height: 100%;
+  background: #f5e6c8;
+  border: 1.5px solid #c9a84c;
+  border-radius: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Triangle flap — two borders create the V shape */
+.dp-env-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 22px solid transparent;
+  border-right: 22px solid transparent;
+  border-top: 15px solid #c9a84c;
+}
+
+.dp-owl-from {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 10px;
+  color: #7a6040;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.dp-owl-subject {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1208;
+  text-decoration: underline;
+  text-decoration-color: #c9a84c66;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+.dp-owl-body {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #2a1a08;
+  margin-bottom: 10px;
+}
+
+/* Wax-seal style dot divider */
+.dp-owl-seal {
+  text-align: center;
+  color: #c9a84c;
+  font-size: 12px;
+  margin: 6px 0;
+  opacity: 0.65;
+}
+
+.dp-owl-signoff {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 11px;
+  color: #5a4420;
+  text-align: right;
+  line-height: 1.45;
+}
+
+/* ── Column 3: Ministry Decree ───────────────────────────────────────────── */
+
+.dp-decree-col {
+  background: #f5e6c8;
+}
+
+.dp-decree-number {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #c9a84c;
+  margin-bottom: 2px;
+}
+
+.dp-decree-issuedby {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 10px;
+  color: #7a6040;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+.dp-decree-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1208;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.dp-decree-body {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #2a1a08;
+  text-align: justify;
+  margin-bottom: 10px;
+}
+
+/* Dashed divider before penalty clause */
+.dp-decree-dash {
+  border-top: 1px dashed #c9a84c55;
+  margin: 8px 0;
+}
+
+.dp-decree-penalty {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 10px;
+  color: #8b3a3a;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.dp-decree-reward {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 10px;
+  color: #8b6914;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* XP + Gold pill badges */
+.dp-decree-badges {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.dp-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.dp-badge.xp {
+  background: #1a472a;
+  color: #7ab894;
+  border: 1px solid #1a5c34;
+}
+
+.dp-badge.gold {
+  background: #2a1e06;
+  color: #c9a84c;
+  border: 1px solid #8b6914;
+}
+
+/* Comply button */
+.dp-comply-btn {
+  width: 100%;
+  padding: 8px;
+  background: linear-gradient(135deg, #1a472a, #0f2d1a);
+  color: #7ab894;
+  border: 1px solid #1a472a;
+  border-radius: 3px;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dp-comply-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1f5c34, #1a472a);
+}
+
+.dp-comply-btn.honoured,
+.dp-comply-btn:disabled {
+  background: #1a3020;
+  color: #4a7060;
+  cursor: default;
+  border-color: #1a3020;
+}
+
+/* ── Loading skeleton ─────────────────────────────────────────────────────── */
+
+.dp-me-loading {
+  pointer-events: none;
+}
+
+.dp-me-skeleton {
+  padding: 14px 16px;
+  background: #f5e6c8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.dp-skel-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #c9a84c11, #c9a84c33, #c9a84c11);
+  background-size: 200% 100%;
+  animation: dp-me-shimmer 1.6s ease-in-out infinite;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.dp-skel-line {
+  height: 10px;
+  width: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #c9a84c11, #c9a84c33, #c9a84c11);
+  background-size: 200% 100%;
+  animation: dp-me-shimmer 1.6s ease-in-out infinite;
+}
+
+.dp-skel-line.short {
+  width: 55%;
+}
+
+@keyframes dp-me-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+.dp-me-loading-text {
+  text-align: center;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 12px;
+  color: #8b6914;
+  padding: 8px 0 4px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 680px) {
+  .dp-me-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dp-me-col {
+    border-right: none;
+    border-bottom: 1px solid #c9a84c33;
+  }
+
+  .dp-me-col:last-child {
+    border-bottom: none;
+  }
+}

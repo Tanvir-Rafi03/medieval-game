@@ -1,0 +1,821 @@
+/* parchment-panel.css — Parchment & Quill study system */
+
+/* ── Keyframes ────────────────────────────────────────────────────────────── */
+@keyframes pq-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pq-container-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pq-ring-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(26,71,42,0.6)); }
+  50%       { filter: drop-shadow(0 0 10px rgba(34,197,94,0.5)); }
+}
+@keyframes pq-shimmer {
+  0%   { left: -100%; }
+  100% { left: 160%; }
+}
+@keyframes pq-border-strip-scroll {
+  from { background-position: 0 0; }
+  to   { background-position: 48px 0; }
+}
+@keyframes pq-ach-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(201,168,76,0.12); }
+  50%       { box-shadow: 0 0 18px rgba(201,168,76,0.3), 0 0 6px rgba(201,168,76,0.15); }
+}
+@keyframes pq-status-ping {
+  0%    { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+  70%   { box-shadow: 0 0 0 6px transparent; opacity: 0; }
+  100%  { box-shadow: 0 0 0 0 transparent; opacity: 0; }
+}
+@keyframes pq-float-mote {
+  0%   { transform: translateY(0)   translateX(0)   scale(1);   opacity: 0.5; }
+  100% { transform: translateY(-80px) translateX(var(--mx, 10px)) scale(0); opacity: 0; }
+}
+
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+#pq-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,4,2,0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, sans-serif;
+  pointer-events: auto;
+}
+#pq-overlay.visible {
+  display: flex;
+  animation: pq-overlay-in 0.25s ease both;
+}
+#pq-overlay.visible .pq-container {
+  animation: pq-container-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+/* ── Main container ───────────────────────────────────────────────────────── */
+.pq-container {
+  background:
+    linear-gradient(160deg, rgba(44,31,14,0.97) 0%, rgba(26,18,5,0.98) 60%, rgba(37,24,8,0.97) 100%),
+    url('/assets/stone-rune-texture.jpg') center/220px repeat;
+  border: 2px solid #c9a84c;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  width: 90vw;
+  max-width: 1200px;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 0 0 1px #6b4e1a,
+    0 24px 80px rgba(0,0,0,0.95),
+    0 0 60px rgba(201,168,76,0.08);
+}
+
+/* Gold decorative strips — animated scroll */
+.pq-container::before,
+.pq-container::after {
+  content: '';
+  display: block;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #c9a84c 0, #c9a84c 6px,
+    #6b4e1a 6px, #6b4e1a 8px
+  );
+  background-size: 48px 100%;
+  flex-shrink: 0;
+  animation: pq-border-strip-scroll 2s linear infinite;
+}
+.pq-container::after {
+  animation-direction: reverse;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.pq-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px 14px;
+  border-bottom: 1px solid rgba(201,168,76,0.25);
+  flex-shrink: 0;
+}
+.pq-title {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #c9a84c;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pq-quill {
+  display: inline-block;
+  animation: pq-quill-write 1.2s ease-in-out infinite alternate;
+}
+@keyframes pq-quill-write {
+  0%   { transform: rotate(-15deg) translateY(0); }
+  100% { transform: rotate(10deg)  translateY(-3px); }
+}
+.pq-subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: #8a6b2a;
+  letter-spacing: 0.1em;
+  margin-left: auto;
+}
+.pq-close {
+  background: none;
+  border: 1px solid #c9a84c44;
+  color: #c9a84c;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 16px;
+  transition: border-color .15s;
+}
+.pq-close:hover { border-color: #c9a84c; }
+
+/* ── Lobby layout ─────────────────────────────────────────────────────────── */
+.pq-lobby-body {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 0;
+  flex: 1;
+  overflow: hidden;
+}
+.pq-lobby-left {
+  padding: 20px 24px;
+  overflow-y: auto;
+  border-right: 1px solid rgba(201,168,76,0.15);
+}
+.pq-lobby-right {
+  padding: 20px 24px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.15);
+}
+.pq-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c9a84c;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+}
+
+/* ── Session card (lobby) ─────────────────────────────────────────────────── */
+.pq-session-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-left: 2px solid rgba(201,168,76,0.15);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  transition: border-color .2s, border-left-color .2s, box-shadow .2s, transform .15s;
+  cursor: default;
+}
+.pq-session-card:hover {
+  border-color: rgba(201,168,76,0.4);
+  border-left-color: #c9a84c;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 0 20px rgba(201,168,76,0.03);
+  transform: translateX(2px);
+}
+.pq-card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  color: #f0d89a;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.pq-card-meta {
+  font-size: 12px;
+  color: #8a7a5a;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pq-card-phase { font-size: 12px; color: #c9a84c; margin-bottom: 8px; }
+.pq-card-members {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.pq-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1a472a;
+  border: 2px solid #c9a84c44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #c9a84c;
+  font-weight: 700;
+}
+.pq-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.pq-tag {
+  background: rgba(26,71,42,0.5);
+  border: 1px solid #1a472a;
+  color: #7ab894;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+.pq-join-btn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg,#1a472a,#0f2d1a);
+  color: #7ab894;
+  border: 1px solid #1a472a;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  transition: all .15s;
+  position: relative;
+  overflow: hidden;
+}
+.pq-join-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  left: -100%;
+}
+.pq-join-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg,#2a6a40,#1a472a);
+  color: #c0ffd8;
+  box-shadow: 0 0 10px rgba(34,197,94,0.15);
+  transform: translateY(-1px);
+}
+.pq-join-btn:hover:not(:disabled)::after { animation: pq-shimmer 0.5s ease forwards; }
+.pq-join-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.pq-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #5a4a2a;
+}
+.pq-empty-quill {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: pq-float 3s ease-in-out infinite;
+}
+@keyframes pq-float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-10px); }
+}
+.pq-empty-text {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* ── Create form ──────────────────────────────────────────────────────────── */
+.pq-form-label {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: #8a6b2a;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+.pq-form-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 4px;
+  color: #f0d89a;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  margin-bottom: 16px;
+  transition: border-color .15s;
+}
+.pq-form-input:focus {
+  border-color: #c9a84c;
+  box-shadow: 0 0 6px rgba(201,168,76,0.2);
+}
+.pq-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.pq-pill {
+  padding: 6px 14px;
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 20px;
+  background: transparent;
+  color: #8a7a5a;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .15s;
+}
+.pq-pill.active {
+  background: #c9a84c22;
+  border-color: #c9a84c;
+  color: #c9a84c;
+}
+.pq-stepper { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.pq-step-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(201,168,76,0.4);
+  background: transparent;
+  color: #c9a84c;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+.pq-step-btn:hover { background: #c9a84c22; }
+.pq-step-val {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  color: #f0d89a;
+  min-width: 24px;
+  text-align: center;
+}
+.pq-tags-input-wrap { position: relative; margin-bottom: 16px; }
+.pq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(26,71,42,0.5);
+  border: 1px solid #1a472a;
+  color: #7ab894;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  margin: 2px;
+}
+.pq-chip-remove { cursor: pointer; opacity: .7; }
+.pq-chip-remove:hover { opacity: 1; }
+.pq-toggle { display: flex; gap: 0; margin-bottom: 20px; }
+.pq-toggle-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid rgba(201,168,76,0.3);
+  background: transparent;
+  color: #5a4a2a;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .15s;
+}
+.pq-toggle-btn:first-child { border-radius: 3px 0 0 3px; }
+.pq-toggle-btn:last-child  { border-radius: 0 3px 3px 0; border-left: none; }
+.pq-toggle-btn.active {
+  background: #c9a84c22;
+  color: #c9a84c;
+  border-color: #c9a84c;
+}
+.pq-create-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg,#c9a84c,#a07828);
+  color: #1a0f00;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4), 0 0 0 rgba(201,168,76,0);
+  transition: filter .15s, transform .12s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+}
+.pq-create-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  left: -100%;
+}
+.pq-create-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 18px rgba(0,0,0,0.5), 0 0 16px rgba(201,168,76,0.35);
+}
+.pq-create-btn:hover::after { animation: pq-shimmer 0.55s ease forwards; }
+.pq-create-btn:active { transform: translateY(0); filter: brightness(0.97); }
+
+/* ── Session room ─────────────────────────────────────────────────────────── */
+.pq-session-body {
+  display: grid;
+  grid-template-columns: 280px 1fr 260px;
+  gap: 0;
+  flex: 1;
+  overflow: hidden;
+}
+.pq-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid rgba(201,168,76,0.12);
+}
+.pq-panel:last-child { border-right: none; }
+.pq-panel-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c9a84c;
+  letter-spacing: .08em;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+  flex-shrink: 0;
+}
+.pq-panel-scroll { flex: 1; overflow-y: auto; padding: 16px 18px; }
+
+/* ── Timer ring ───────────────────────────────────────────────────────────── */
+.pq-timer-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px 16px;
+}
+.pq-ring-wrap { position: relative; width: 180px; height: 180px; }
+.pq-ring-wrap svg { transform: rotate(-90deg); filter: drop-shadow(0 0 6px rgba(26,71,42,0.5)); }
+.pq-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 9; }
+.pq-ring-progress {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s linear, stroke 0.5s;
+  animation: pq-ring-glow 2.5s ease-in-out infinite;
+}
+/* Outer decorative ring */
+.pq-ring-outer {
+  fill: none;
+  stroke: rgba(201,168,76,0.12);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+}
+/* Floating ambient motes inside the overlay */
+#pq-overlay.visible::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 70%, rgba(201,168,76,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 55% 40%, rgba(201,168,76,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 65%, rgba(201,168,76,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 25%, rgba(201,168,76,0.3) 0%, transparent 100%),
+    radial-gradient(2px 2px at 70% 85%, rgba(201,168,76,0.25) 0%, transparent 100%);
+  animation: pq-float-mote 8s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.pq-ring-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.pq-countdown {
+  font-family: 'Cinzel', serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #f0d89a;
+}
+.pq-phase-label {
+  font-size: 11px;
+  color: #8a7a5a;
+  letter-spacing: .08em;
+  margin-top: 4px;
+  text-align: center;
+}
+.pq-streak { font-size: 13px; color: #c9a84c; margin-top: 2px; }
+
+/* Timer controls */
+.pq-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 16px 0 8px;
+  flex-wrap: wrap;
+}
+.pq-ctrl-btn {
+  padding: 8px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  transition: all .15s;
+}
+.pq-ctrl-btn.primary {
+  background: linear-gradient(135deg,#1a472a,#0f2d1a);
+  color: #7ab894;
+  border: 1px solid #1a472a;
+}
+.pq-ctrl-btn.primary:hover { background: linear-gradient(135deg,#2a6a40,#1a472a); }
+.pq-ctrl-btn.secondary {
+  background: transparent;
+  color: #8a7a5a;
+  border: 1px solid rgba(201,168,76,0.2);
+}
+.pq-ctrl-btn.secondary:hover { border-color: #c9a84c; color: #c9a84c; }
+.pq-ctrl-btn.danger {
+  background: transparent;
+  color: #8a3a3a;
+  border: 1px solid rgba(138,58,58,0.3);
+}
+.pq-ctrl-btn.danger:hover { border-color: #c9a84c44; color: #c97a7a; }
+.pq-waiting-msg {
+  text-align: center;
+  font-size: 11px;
+  color: #5a4a2a;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ── Member cards ─────────────────────────────────────────────────────────── */
+.pq-members-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  border-top: 1px solid rgba(201,168,76,0.1);
+}
+.pq-member-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.pq-member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2a6a42, #1a472a 60%, #0f2d1a);
+  border: 2px solid #c9a84c55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #c9a84c;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(26,71,42,0.3);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.pq-member-card:hover .pq-member-avatar {
+  border-color: #c9a84c88;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.15), 0 0 10px rgba(201,168,76,0.1);
+}
+.pq-crown { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 14px; }
+.pq-member-name { font-family: 'Cinzel', serif; font-size: 11px; color: #f0d89a; font-weight: 700; }
+.pq-member-subject {
+  font-size: 11px;
+  color: #5a7a5a;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: border-color .15s;
+}
+.pq-member-subject:hover { border-bottom-color: #5a7a5a; }
+.pq-member-subject[contenteditable] { outline: none; border-bottom-color: #c9a84c; }
+.pq-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.pq-status-dot.active { background: #22c55e; }
+.pq-status-dot.idle   { background: #eab308; }
+.pq-status-dot.break  { background: #94a3b8; }
+.pq-spark-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 2px;
+  color: #8a7a5a;
+  cursor: pointer;
+  transition: all .15s;
+}
+.pq-spark-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+.pq-quill-count { font-size: 10px; color: #5a4a2a; }
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.pq-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+.pq-tab {
+  flex: 1;
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: #5a4a2a;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.pq-tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
+.pq-tab-content { display: none; }
+.pq-tab-content.active { display: block; }
+
+/* ── Study log ────────────────────────────────────────────────────────────── */
+.pq-subject-input {
+  width: 100%;
+  padding: 7px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 4px;
+  color: #f0d89a;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+  min-height: 32px;
+  font-family: inherit;
+}
+.pq-subject-input:focus { border-color: #c9a84c; }
+.pq-log-entry {
+  font-size: 11px;
+  color: #8a7a5a;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  gap: 8px;
+}
+.pq-log-entry .round-badge { color: #c9a84c; font-weight: 700; flex-shrink: 0; }
+.pq-log-entry .log-label  { flex: 1; cursor: pointer; }
+.pq-log-entry .log-label:hover { color: #c9a84c; }
+.pq-log-total { font-size: 11px; color: #5a4a2a; margin-top: 12px; font-style: italic; }
+
+/* ── Kanban ───────────────────────────────────────────────────────────────── */
+.pq-kanban { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.pq-kanban-col { display: flex; flex-direction: column; gap: 6px; }
+.pq-kanban-title {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  color: #8a7a5a;
+  letter-spacing: .06em;
+  margin-bottom: 4px;
+}
+.pq-card-chip {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #d4b483;
+  cursor: grab;
+  user-select: none;
+  position: relative;
+}
+.pq-card-chip:active { cursor: grabbing; }
+.pq-card-chip.dragging { opacity: .5; }
+.pq-card-chip.mastered { border-color: #1a472a44; color: #7ab894; }
+.pq-card-time { font-size: 9px; color: #5a4a2a; margin-top: 3px; }
+.pq-add-topic {
+  font-size: 11px;
+  color: #5a4a2a;
+  cursor: pointer;
+  padding: 4px;
+  text-align: center;
+  border: 1px dashed rgba(201,168,76,0.15);
+  border-radius: 3px;
+  transition: all .15s;
+  margin-top: 4px;
+}
+.pq-add-topic:hover { color: #c9a84c; border-color: #c9a84c33; }
+.pq-add-input {
+  width: 100%;
+  padding: 5px 7px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 3px;
+  color: #f0d89a;
+  font-size: 11px;
+  outline: none;
+  box-sizing: border-box;
+  margin-top: 4px;
+}
+
+/* ── Achievements panel ────────────────────────────────────────────────────── */
+.pq-ach-card {
+  border-radius: 5px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(201,168,76,0.3);
+  background: rgba(201,168,76,0.06);
+  box-shadow: 0 0 8px rgba(201,168,76,0.12);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  animation: pq-ach-glow 3s ease-in-out infinite;
+}
+.pq-ach-card:hover {
+  border-color: rgba(201,168,76,0.6);
+  box-shadow: 0 0 20px rgba(201,168,76,0.25), 0 4px 12px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+}
+.pq-ach-card.locked {
+  filter: grayscale(.8) opacity(.5);
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: none;
+  animation: none;
+}
+.pq-ach-card.locked:hover { transform: none; box-shadow: none; }
+.pq-ach-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.pq-ach-emoji { font-size: 22px; }
+.pq-ach-name { font-family: 'Cinzel', serif; font-size: 12px; color: #c9a84c; font-weight: 700; }
+.pq-ach-locked-name { font-family: 'Cinzel', serif; font-size: 12px; color: #5a4a2a; }
+.pq-ach-flavour { font-size: 11px; color: #6a5a3a; font-style: italic; line-height: 1.5; }
+.pq-ach-hint { font-size: 11px; color: #4a3a2a; font-style: italic; }
+.pq-ach-rewards { font-size: 10px; color: #8a7a5a; margin-top: 6px; }
+.pq-ach-date { font-size: 10px; color: #5a4a2a; margin-top: 2px; }
+.pq-progress-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.pq-progress-fill {
+  height: 100%;
+  background: #1a472a;
+  border-radius: 2px;
+  transition: width .3s;
+}
+.pq-section-divider {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: #5a4a2a;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 10px 0 6px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 8px;
+}
+
+/* ── Achievement toast ────────────────────────────────────────────────────── */
+.pq-toast {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: linear-gradient(135deg,#d4b040,#c9a84c 40%,#a07828);
+  color: #1a0f00;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(-100%);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.4);
+}
+.pq-toast.show {
+  transform: translateY(0);
+}
+.pq-toast::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: pq-shimmer 2s ease infinite;
+  pointer-events: none;
+}

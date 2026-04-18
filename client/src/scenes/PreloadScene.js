@@ -20,6 +20,7 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.on('progress', v => { bar.width = 400 * v; });
 
     this.load.image('world', 'assets/world.png');
+    this.load.image('fog',   'assets/fog.jpg');
 
     this.load.spritesheet('player', 'assets/sprites/player-sheet.png', {
       frameWidth:  512,

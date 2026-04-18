@@ -2,13 +2,13 @@
 // Walls measured against lines.png — all coords are fractions (0–1) of the world image.
 // Set DEBUG_WALLS = true to see coloured outlines in-game.
 
-export const DEBUG_WALLS = true;
-export const DEBUG_FOREGROUND = true; // flip to false to hide foreground outlines
+export const DEBUG_WALLS = false; // set true to see red outlines
+export const DEBUG_FOREGROUND = false; // flip to false to hide foreground outlines
 
 export const WALLS = [
   // ── World edges ───────────────────────────────────────────────────────────
   { x: 0.00, y: 0.00, w: 1.00, h: 0.04 }, // sky — not walkable
-  { x: 0.00, y: 0.98, w: 1.00, h: 0.06 }, // bottom edge
+  { x: 0.00, y: 0.97, w: 1.00, h: 0.03 }, // bottom edge (lowered to give more walkable space)
   { x: 0.00, y: 0.00, w: 0.03, h: 1.00 }, // far-left building (blocks full left side)
   { x: 0.95, y: 0.00, w: 0.07, h: 1.00 }, // far-right building
 
@@ -40,9 +40,9 @@ export const WALLS = [
 
   // ── Curiosities — bottom-left ─────────────────────────────────────────────
 
-  { x: 0.25, y: 0.52, w: 0.03, h: 0.29 }, // right side wall (extends to front)
+  { x: 0.25, y: 0.50, w: 0.03, h: 0.25 }, // right side wall (ends at y=0.70, gap before front wall lets player exit east)
   { x: 0.10, y: 0.73, w: 0.20, h: 0.09 }, // front wall
-  { x: 0.05, y: 0.83, w: 0.10, h: 0.05 },
+  { x: 0.02, y: 0.83, w: 0.16, h: 0.10 },
   // ── Broomstick Museum — back wall (diagonal ↘) ───────────────────────────
   { x: 0.523, y: 0.810, w: 0.070, h: 0.04 },
   { x: 0.510, y: 0.840, w: 0.070, h: 0.04 },
@@ -67,7 +67,7 @@ export const WALLS = [
 
 
   // ── Bottom-centre dark rooftop ────────────────────────────────────────────
-  { x: 0.32, y: 0.88, w: 0.24, h: 0.13 },
+  { x: 0.34, y: 0.88, w: 0.16, h: 0.06 }, // trimmed — was bleeding into open ground
   { x: 0.30, y: 0.93, w: 0.04, h: 0.04 },
 ];
 
